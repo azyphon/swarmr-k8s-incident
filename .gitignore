@@ -6,6 +6,11 @@
 *.kubeconfig
 .incident-reader.kubeconfig
 
+# Machine-local. mcp.json names an absolute interpreter path and cwd, so a
+# committed copy is wrong for everyone but its author. The README carries the
+# template instead.
+.omp/
+
 # Environments and build output
 .venv/
 build/
