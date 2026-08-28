@@ -1,0 +1,110 @@
+# Fault 5 — crash loop caused by a bad config file.
+#
+# The image is fine, the tag exists, the architecture matches, the Service and
+# Ingress are correct, and there is no PVC. nginx starts, reads a mounted config
+# containing an invalid directive, prints the reason, and exits 1. Kubernetes
+# restarts it, and the pods settle into CrashLoopBackOff.
+#
+# What makes this a different test from the earlier faults: the answer is only
+# in the *previous* container instance's log. A pull failure leaves no logs at
+# all, and a routing fault leaves healthy logs. Here the evidence exists but is
+# one flag away — k_logs(previous=True) — and the second half of the answer is
+# in the ConfigMap the pod mounts.
+#
+# Expected chain:
+#   workload  CrashLoopBackOff, lastState Terminated exit=1, and the previous
+#             log naming the offending directive; then the ConfigMap it came from
+#   network   Service and Ingress are correct; no ready endpoints, hence 503
+#   platform  image is multi-arch, nodes are healthy, restarts are not a reboot
+#   storage   no PVCs; a ConfigMap volume is not a storage fault
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: checkout-config
+  namespace: demo
+data:
+  # "wroker_connections" is a typo for "worker_connections", and it sits in the
+  # wrong block as well. nginx refuses to start and says so on stderr.
+  default.conf: |
+    server {
+        listen 8080;
+        wroker_connections 1024;
+        location / {
+            return 200 "ok\n";
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout
+  namespace: demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: checkout
+  template:
+    metadata:
+      labels:
+        app: checkout
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.29-alpine
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nginx/conf.d
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+      volumes:
+        - name: config
+          configMap:
+            name: checkout-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkout
+  namespace: demo
+spec:
+  selector:
+    app: checkout
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: checkout
+  namespace: demo
+spec:
+  rules:
+    - host: checkout.demo.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: checkout
+                port:
+                  number: 80

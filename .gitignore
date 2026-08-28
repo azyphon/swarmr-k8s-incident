@@ -1,0 +1,23 @@
+# Secrets. The .env holds a live model API key and the kubeconfig holds a
+# ServiceAccount token; neither may ever be committed.
+.env
+.env.*
+!.env.example
+*.kubeconfig
+.incident-reader.kubeconfig
+
+# Environments and build output
+.venv/
+build/
+dist/
+*.egg-info/
+
+# Caches
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# Agent scratch
+evidence/

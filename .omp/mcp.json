@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
+  "mcpServers": {
+    "swarmr": {
+      "type": "stdio",
+      "command": "/Users/dnkool/Documents/workspaces/azyphon/swarmr-k8s-incident/.venv/bin/python",
+      "args": [
+        "-m",
+        "swarmr.server"
+      ],
+      "cwd": "/Users/dnkool/Documents/workspaces/azyphon/swarmr-k8s-incident",
+      "timeout": 0
+    }
+  }
+}

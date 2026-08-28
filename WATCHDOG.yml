@@ -1,0 +1,5 @@
+advisors:
+  - name: prime
+    model: openai-codex/gpt-5.5
+  - name: nightwatcher
+    model: kimi/kimi-for-coding
