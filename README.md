@@ -33,17 +33,28 @@ baseline, which the critic is then told to reject as a non-explanation.
 ## Install
 
 ```bash
+uv tool install git+https://github.com/azyphon/swarmr-lib \
+  --with git+https://github.com/azyphon/swarmr-k8s-incident \
+  --with-executables-from swarmr-k8s-incident
+```
+
+That exposes `teams`, `teams-mcp` and `incident-credentials` on your PATH.
+`--with-executables-from` is required for the third: `--with` alone installs
+this package into the tool environment but only links the *core* package's
+commands, leaving `incident-credentials` unreachable. A plain venv works too:
+
+```bash
 python3 -m venv .venv
 .venv/bin/pip install git+https://github.com/azyphon/swarmr-lib
 .venv/bin/pip install git+https://github.com/azyphon/swarmr-k8s-incident
 ```
 
-**Core first, and in that order.** This package declares `swarmr>=0.1,<0.2`,
-which pip resolves against an index; `swarmr` is not published to one, so
-installing this package into an empty environment fails with `No matching
-distribution found for swarmr`. Installing core from git first satisfies the
-requirement. The constraint stays a version rather than a direct git URL so that
-publishing to an index later needs no change here.
+**Core first, and in that order.** This package declares `swarmr>=1.0,<2`,
+which pip resolves against an index; `swarmr` is distributed from git, not an
+index, so installing this package into an empty environment fails with `No
+matching distribution found for swarmr`. Installing core first satisfies the
+requirement. The constraint stays a version rather than a git URL so that
+moving to an index later changes nothing here.
 
 Both must end up in the same environment: the `teams` CLI and `teams-mcp` server
 come from `swarmr` and pick this team up from installed metadata.
@@ -118,12 +129,17 @@ an agent that cannot say that is not usable.
 ## Development
 
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -e ../swarmr-lib -e ".[dev]"   # core from a sibling checkout
-.venv/bin/python -m pytest                            # no cluster, no model calls
-INCIDENT_E2E=1 .venv/bin/python -m pytest -s          # adds a live investigation
-.venv/bin/ruff check . && .venv/bin/pyright
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ../swarmr-lib -e ".[dev]"   # core from a sibling checkout
+pytest                                     # no cluster, no model calls
+INCIDENT_E2E=1 pytest -s                   # adds a live investigation
+ruff check . && pyright
 ```
+
+Activate the venv rather than calling `.venv/bin/…` directly: pyright resolves
+the interpreter from PATH, so unactivated it type-checks against a Python that
+has none of the dependencies and reports every import as unresolved. Without
+activating, pass `--pythonpath .venv/bin/python`.
 
 Everything this team is lives in one package: code, tests, RBAC and demo
 manifests. Its only coupling to the harness is `swarmr`'s ABI — `Team`,

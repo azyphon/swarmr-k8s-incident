@@ -1,13 +1,13 @@
 [project]
 name = "swarmr-k8s-incident"
-version = "0.1.0"
+version = "1.0.0"
 description = "Kubernetes incident investigation team for swarmr."
 requires-python = ">=3.13"
 # The team owns its SDK. `swarmr` is capped to a minor because `Team`,
 # `RunContext`, `TeamBuild` and the `swarmr.teams` entry-point group are an ABI
 # this package implements; a minor bump may move them.
 dependencies = [
-  "swarmr>=0.1,<0.2",
+  "swarmr>=1.0,<2",
   "kubernetes>=32",
   "pyyaml>=6",
 ]
@@ -34,8 +34,11 @@ packages = ["src/swarmr_k8s_incident"]
 exclude = ["**/tests"]
 
 [tool.pyright]
-venvPath = "."
-venv = ".venv"
+# No venvPath/venv: those hardcode a `./.venv` that exists on a contributor's
+# machine and nowhere else. CI installs into the interpreter already on PATH,
+# and pinning a directory there made pyright find no interpreter at all and
+# report every third-party import as unresolved. Pyright takes the interpreter
+# from PATH, so activate the venv (or pass --pythonpath) when running locally.
 pythonVersion = "3.13"
 include = ["src"]
 exclude = [".venv", "**/__pycache__"]
