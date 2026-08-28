@@ -1,14 +1,14 @@
 name: Release
+
 on:
   push:
     branches: [main]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
-  release:
+  release-please:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -16,4 +16,4 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
-          release-type: go
+          release-type: python
