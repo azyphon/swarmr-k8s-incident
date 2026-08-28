@@ -33,12 +33,21 @@ is then told to reject as a non-explanation.
 ## Install
 
 ```bash
-pip install git+https://github.com/azyphon/swarmr-k8s-incident
+python3 -m venv .venv
+.venv/bin/pip install git+https://github.com/azyphon/swarmr-lib
+.venv/bin/pip install git+https://github.com/azyphon/swarmr-k8s-incident
 ```
 
-`swarmr` comes along as a dependency. Both must be in the same environment; the
-`teams` CLI and `teams-mcp` server come from `swarmr` and pick this team up from
-installed metadata.
+**Core first, and in that order.** This package declares `swarmr>=0.1,<0.2`,
+which pip resolves against an index; `swarmr` is not published to one, so
+installing this package into an empty environment fails with `No matching
+distribution found for swarmr`. Installing core from git first satisfies the
+requirement, and pip leaves the already-installed copy alone. The constraint
+stays a version rather than a direct git URL so that publishing to an index
+later needs no change here.
+
+Both must end up in the same environment: the `teams` CLI and `teams-mcp`
+server come from `swarmr` and pick this team up from installed metadata.
 
 ```bash
 teams --list                # k8s_incident
