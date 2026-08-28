@@ -1,6 +1,6 @@
 [project]
 name = "swarmr-k8s-incident"
-version = "1.0.0"
+version = "1.0.1"
 description = "Kubernetes incident investigation team for swarmr."
 requires-python = ">=3.13"
 # The team owns its SDK. `swarmr` is capped to a minor because `Team`,
