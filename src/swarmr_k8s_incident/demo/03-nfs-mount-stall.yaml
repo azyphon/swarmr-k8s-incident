@@ -1,0 +1,90 @@
+# Fault 3 — CSI provisioning stall (verified mechanism).
+#
+# A StorageClass pointing at an NFS server that does not answer. The
+# nfs.csi.k8s.io provisioner does contact the server: CreateVolume mounts the
+# share internally to lay down the subdirectory. With an unreachable server
+# that mount hangs, so the PVC never binds.
+#
+# Observed symptom chain:
+#   PVC demo/reports-data          stays Pending. For the first ~110s the only
+#                                  events are Normal ("Provisioning",
+#                                  "ExternalProvisioning"); after the mount
+#                                  timeout expires a ProvisioningFailed event
+#                                  appears naming the unreachable server.
+#   Pod  reports-*                 stays Pending, FailedScheduling:
+#                                  "pod has unbound immediate PersistentVolumeClaims"
+#
+# This fault exists to prove the routing is not hardcoded, and it is the
+# hardest of the three:
+#   workload  finds NOTHING. The pod has no container status at all.
+#   network   finds NOTHING. There is no Service and no traffic involved.
+#   platform  sees FailedScheduling and could wrongly claim a capacity or
+#             placement fault. The nodes are fine; the volume is not.
+#   storage   wins. There is NO Warning event anywhere naming the cause. The
+#             only real evidence is in the csi-nfs-CONTROLLER log (container
+#             "nfs", on the node running the controller), which shows
+#             "internally mounting 192.168.68.253:/srv/nfs/does-not-exist"
+#             followed by a mount command that never returns. Note this is the
+#             controller, not the per-node plugin: nothing ever reached a
+#             kubelet mount, because provisioning never completed.
+#
+# 192.168.68.253 is chosen to be unreachable on this LAN. Change it if that
+# address ever becomes live.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-broken
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: 192.168.68.253
+  share: /srv/nfs/does-not-exist
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: reports-data
+  namespace: demo
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: nfs-broken
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reports
+  namespace: demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reports
+  template:
+    metadata:
+      labels:
+        app: reports
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.29-alpine
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/nginx/html
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: reports-data

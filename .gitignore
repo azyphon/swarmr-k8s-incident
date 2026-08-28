@@ -1,0 +1,29 @@
+# Secrets. The .env holds a live model API key and the kubeconfig holds a
+# ServiceAccount token; neither may ever be committed.
+.env
+.env.*
+!.env.example
+*.kubeconfig
+.incident-reader.kubeconfig
+
+# Local agent tooling, not project configuration. mcp.json names an absolute
+# interpreter path and cwd; WATCHDOG.yml names the advisor models one author
+# happens to run. Neither belongs to anyone who clones this.
+.omp/
+WATCHDOG.yml
+
+# Environments and build output
+.venv/
+build/
+dist/
+*.egg-info/
+
+# Caches
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# Agent scratch
+evidence/

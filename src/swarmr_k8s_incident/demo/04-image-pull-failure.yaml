@@ -1,0 +1,85 @@
+# Fault 4 — image cannot be pulled at all.
+#
+# The tag does not exist in the registry. Distinct from 01, where the tag exists
+# but publishes no matching platform: here the registry answers "manifest
+# unknown", so the failure is the reference itself, not the architecture.
+#
+# That distinction is the point. Both faults surface identically at first
+# glance — ImagePullBackOff, no ready endpoints, ingress 503 — so the team has
+# to read the actual event message and the registry answer rather than
+# pattern-matching the previous incident.
+#
+# Expected chain:
+#   workload  ImagePullBackOff, container never started, no logs at all
+#   platform  image_platforms lookup FAILS (HTTP 404) because the tag is absent,
+#             which is the proof it is not an architecture mismatch
+#   network   endpoints exist but none ready -> 503, no routing defect
+#   storage   nothing (no PVCs)
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reports
+  namespace: demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: reports
+  template:
+    metadata:
+      labels:
+        app: reports
+    spec:
+      containers:
+        - name: web
+          # This tag has never existed. nginx ships 1.29-alpine, not 1.99.
+          image: nginx:1.99-does-not-exist
+          ports:
+            - name: http
+              containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reports
+  namespace: demo
+spec:
+  selector:
+    app: reports
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: reports
+  namespace: demo
+spec:
+  rules:
+    - host: reports.demo.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: reports
+                port:
+                  number: 80
