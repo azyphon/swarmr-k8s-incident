@@ -53,17 +53,4 @@ The 8h token refreshes itself: every run reads the expiry before opening a
 connection and re-mints when under five minutes remain. Only files this team
 minted are ever rewritten. `INCIDENT_NO_REFRESH=1` turns it off.
 
-## Development
-
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ../swarmr-lib -e ".[dev]"
-pytest
-INCIDENT_E2E=1 pytest -s
-ruff check . && pyright
-```
-
-Everything this team is lives in one package: code, tests, RBAC and demo
-manifests. Its only coupling to the harness is `swarmr`'s ABI.
-
 Design notes and internals: [CLAUDE.md](CLAUDE.md).
