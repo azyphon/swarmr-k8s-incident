@@ -4,15 +4,6 @@ Kubernetes incident response team for
 [swarmr](https://github.com/azyphon/swarmr-lib). Diagnoses a live cluster and
 proves the root cause.
 
-```
-commander (no cluster tools at all)
-├── workload    is the container itself failing?
-├── network     can traffic reach a serving backend?
-├── storage     is the pod blocked before it ever started?
-├── platform    is placement, capacity or node architecture the problem?
-└── critic      independently tries to disprove the hypothesis
-```
-
 Read-only twice over: the credential grants only get/list/watch, and filesystem
 permissions deny writes outside `evidence/`. Nothing about the cluster is
 hardcoded — the team profiles it at startup and injects what it found into every
