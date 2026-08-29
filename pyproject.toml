@@ -34,11 +34,12 @@ packages = ["src/swarmr_k8s_incident"]
 exclude = ["**/tests"]
 
 [tool.pyright]
-# No venvPath/venv: those hardcode a `./.venv` that exists on a contributor's
-# machine and nowhere else. CI installs into the interpreter already on PATH,
-# and pinning a directory there made pyright find no interpreter at all and
-# report every third-party import as unresolved. Pyright takes the interpreter
-# from PATH, so activate the venv (or pass --pythonpath) when running locally.
+# venvPath/venv is the only project-level signal an editor's pyright reads, and
+# without it the language server type-checks against whatever interpreter is on
+# PATH — a bare system python where every third-party import is unresolved. CI
+# therefore builds `.venv` too, so this one path is correct everywhere.
+venvPath = "."
+venv = ".venv"
 pythonVersion = "3.13"
 include = ["src"]
 exclude = [".venv", "**/__pycache__"]
