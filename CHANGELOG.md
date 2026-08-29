@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/azyphon/swarmr-k8s-incident/compare/v1.0.1...v1.1.0) (2026-08-29)
+
+
+### Features
+
+* update documentation ([#5](https://github.com/azyphon/swarmr-k8s-incident/issues/5)) ([5630ae1](https://github.com/azyphon/swarmr-k8s-incident/commit/5630ae1768be44744a077f8bdd4916b643d38adc))
+
 ## [1.0.1](https://github.com/azyphon/swarmr-k8s-incident/compare/v1.0.0...v1.0.1) (2026-08-28)
 
 
